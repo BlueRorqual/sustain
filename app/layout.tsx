@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import { Providers } from './providers'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -27,8 +28,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-white dark:bg-neutral-950 antialiased">
-        {children}
+      <body className="min-h-screen bg-slate-950 text-slate-100 antialiased">
+        <Providers>{children}</Providers>
       </body>
     </html>
   )
