@@ -1,5 +1,5 @@
 'use client'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
 import { v4 as uuid } from 'uuid'
 import { db } from '@/lib/db'
@@ -9,6 +9,13 @@ import type { Recipe, GroceryItem, DietaryPrefs } from '@/types'
 export function useRecipes(groceryListId: string) {
   const [savedRecipes, setSavedRecipes] = useState<Recipe[]>([])
   const [nutritionLoading, setNutritionLoading] = useState<Record<string, boolean>>({})
+
+  useEffect(() => {
+    if (!groceryListId) return
+    db.recipes.where('groceryListId').equals(groceryListId).toArray().then((stored) => {
+      if (stored.length > 0) setSavedRecipes(stored)
+    })
+  }, [groceryListId])
 
   const fetchNutritionForAll = useCallback(async (recipes: Recipe[]) => {
     setNutritionLoading(Object.fromEntries(recipes.map((r) => [r.id, true])))
