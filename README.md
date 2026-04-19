@@ -15,7 +15,7 @@ A mobile-first Progressive Web App that helps you make sustainable choices at th
 | Concern | Choice |
 |---|---|
 | Platform | Mobile-first PWA (installable, offline-capable) |
-| Framework | Next.js 15 App Router |
+| Framework | Next.js 16 App Router (Turbopack) |
 | Hosting | Vercel |
 | AI | Claude via Vercel AI Gateway (`ai` SDK v6) |
 | Local state | IndexedDB (Dexie.js) |
@@ -31,9 +31,9 @@ A mobile-first Progressive Web App that helps you make sustainable choices at th
 ### Prerequisites
 
 - Node.js 20+
-- A [Vercel](https://vercel.com) account (for AI Gateway OIDC auth)
-- Edamam API credentials (free tier works)
-- Optional: Google OAuth credentials for sign-in
+- A [Vercel](https://vercel.com) account (for AI Gateway OIDC auth — requires a credit card on file to unlock free credits)
+- Optional: Google OAuth credentials for sign-in and cross-device sync
+- Optional: Postgres `DATABASE_URL` for cloud sync (local-only works without it)
 
 ### 1. Install dependencies
 
@@ -47,13 +47,21 @@ npm install
 # Link to your Vercel project and pull OIDC token for AI Gateway
 vercel link
 vercel env pull .env.local
-
-# Then fill in the remaining values:
-cp .env.local.example .env.local.additions
-# Add EDAMAM_APP_ID, EDAMAM_APP_KEY, NEXTAUTH_SECRET, DATABASE_URL, etc.
 ```
 
-See `.env.local.example` for all required variables.
+Then add to `.env.local`:
+```
+NEXTAUTH_SECRET=<openssl rand -base64 32>
+NEXTAUTH_URL=http://localhost:3000
+# Optional — for Google sign-in and cloud sync:
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+DATABASE_URL=
+```
+
+> **AI Gateway**: requires a credit card on file at vercel.com to unlock free monthly credits. Run `vercel env pull` after adding the card to get a fresh `VERCEL_OIDC_TOKEN`.
+
+> **Nutrition data** (Edamam): no free tier available — the app degrades gracefully without it.
 
 ### 3. Set up the database (optional — only needed for cloud sync)
 
@@ -80,7 +88,7 @@ app/                    # Next.js App Router pages + API routes
     markets/            # USDA proxy
     sync/               # Cloud sync (auth-gated)
     auth/               # NextAuth
-components/             # UI components
+components/             # UI components (including BottomNav)
 hooks/                  # React hooks (IndexedDB + API)
 lib/                    # Clients, prompt builders, sync logic
 types/                  # Shared TypeScript types
@@ -110,7 +118,8 @@ npm run test:e2e
 - **Local-first**: All data lives in IndexedDB. The app works fully offline after the first load. Postgres sync is additive, not required.
 - **Optional auth**: Anonymous users get the full experience. Signing in enables cross-device history.
 - **AI Gateway**: All Claude calls route through the Vercel AI Gateway using OIDC auth — no raw Anthropic API keys in the app.
-- **Prompt caching**: Seasonal produce prompts are cached in IndexedDB by `region:month` for 7 days to reduce API calls.
+- **Prompt caching**: Seasonal produce is cached in IndexedDB by `region:month` for 7 days. Recipes are cached by `groceryListId`. Neither re-calls Claude if a valid cache exists.
+- **Known limitations**: USDA Farmers Market API cert is currently expired — markets degrade to an empty list. Edamam Nutrition API has no free tier — nutrition data is unavailable without a paid plan.
 
 ## Out of scope
 

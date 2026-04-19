@@ -6,12 +6,14 @@ Guidance for Claude Code when working in this repository.
 
 Sustain is a mobile-first PWA that helps users find locally sourced seasonal produce, build grocery lists, and get AI-generated recipes. See `README.md` for the full overview and `docs/superpowers/specs/2026-04-10-sustain-design.md` for the approved design spec.
 
-## Implementation plan
+## Implementation status
 
-The step-by-step implementation plan is at:
-`docs/superpowers/plans/2026-04-10-sustain-implementation.md`
+The scaffold is fully implemented and running. The implementation plan at
+`docs/superpowers/plans/2026-04-10-sustain-implementation.md` is complete.
 
-Use `superpowers:executing-plans` or `superpowers:subagent-driven-development` to execute it task-by-task.
+**Working:** onboarding, discover (produce via Claude), grocery list, recipe generation (streaming), recipe detail, bottom nav, IndexedDB caching for produce (7d TTL) and recipes (by groceryListId).
+
+**Degraded:** USDA markets (cert expired — returns `[]`), Edamam nutrition (no free tier — skipped), Google auth + cloud sync (needs `GOOGLE_CLIENT_ID/SECRET` + `DATABASE_URL`).
 
 ## Key conventions
 
@@ -46,15 +48,23 @@ All shared types are in `types/index.ts`. Do not duplicate type definitions else
 
 - All components are client components (`'use client'`) unless they have no interactivity.
 - `MarketsMap` uses a dynamic import (`next/dynamic`, `ssr: false`) because Leaflet requires browser APIs.
+- `BottomNav` is rendered in `app/layout.tsx` and appears on all pages. Content is wrapped in `pb-16` to avoid overlap.
 - Styling is Tailwind CSS only — no CSS modules or styled-components.
 - The color palette is dark (slate-950 background, green-600 primary).
+
+### Known gotchas
+
+- `router.replace/push` must be called inside `useEffect`, not during render — causes "setState while rendering" error.
+- `useObject` from `@ai-sdk/react` expects the API to return `toTextStreamResponse()`, not `toUIMessageStreamResponse()` (which is for `useChat`).
+- AI Gateway requires a credit card on file before OIDC tokens work. After adding card, re-run `vercel env pull` to get a fresh token.
+- The hook validator incorrectly flags `useObject.isLoading` as removed in v6 — this only applies to `useChat`. Ignore this warning for `useObject`.
 
 ### API routes
 
 | Route | Purpose | Notes |
 |---|---|---|
 | `/api/produce` | Claude seasonal produce | Cached by client in IndexedDB 7 days |
-| `/api/recipes` | Claude streaming recipes | Returns `toUIMessageStreamResponse()` |
+| `/api/recipes` | Claude streaming recipes | Returns `toTextStreamResponse()` — required for `useObject` |
 | `/api/nutrition` | Edamam proxy | Graceful null on failure |
 | `/api/markets` | USDA proxy | Graceful empty array on failure |
 | `/api/sync` | Postgres sync | Auth-gated — requires NextAuth session |
