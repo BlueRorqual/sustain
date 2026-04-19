@@ -23,6 +23,9 @@ export function useUserPrefs() {
     db.userPrefs.get('singleton').then((stored) => {
       if (stored) setPrefs(stored)
       setLoading(false)
+    }).catch((err) => {
+      console.error('[useUserPrefs] IndexedDB error:', err)
+      setLoading(false)
     })
   }, [])
 

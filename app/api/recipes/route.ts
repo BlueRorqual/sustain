@@ -47,7 +47,7 @@ export async function POST(req: Request) {
       ],
     })
 
-    return result.toUIMessageStreamResponse()
+    return result.toTextStreamResponse()
   } catch (error) {
     console.error('[api/recipes]', error)
     return NextResponse.json({ error: 'Failed to generate recipes' }, { status: 500 })

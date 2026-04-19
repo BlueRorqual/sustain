@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { LocationPicker } from '@/components/location-picker'
 import { DietaryPrefsForm } from '@/components/dietary-prefs-form'
@@ -11,11 +11,14 @@ export default function OnboardingPage() {
   const { prefs, loading, updateLocation, updateDietary } = useUserPrefs()
   const [step, setStep] = useState<'location' | 'dietary'>('location')
 
-  if (loading) return null
+  useEffect(() => {
+    if (!loading && prefs.location.city && prefs.updatedAt > 0) {
+      router.replace('/discover')
+    }
+  }, [loading, prefs, router])
 
-  if (prefs.location.city && prefs.updatedAt > 0) {
-    router.replace('/discover')
-    return null
+  if (loading || (prefs.location.city && prefs.updatedAt > 0)) {
+    return <div className="flex min-h-screen items-center justify-center text-slate-500">Loading…</div>
   }
 
   async function handleLocation(loc: UserLocation) {
