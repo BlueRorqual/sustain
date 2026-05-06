@@ -86,7 +86,7 @@ export default function DiscoverPage() {
       </div>
 
       {selected.size > 0 && (
-        <div className="fixed bottom-6 left-0 right-0 flex justify-center px-4">
+        <div className="fixed bottom-20 left-0 right-0 flex justify-center px-4">
           <button
             onClick={() => router.push('/grocery')}
             className="rounded-full bg-green-600 px-6 py-3 font-medium shadow-lg"
